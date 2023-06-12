@@ -1,54 +1,50 @@
 import React, { useState } from 'react';
 // import InputForm from './components/inputForm';
-// import MainTable from './components/mainTable';
+
 import TableRow from './components/tableRow';
+import InitialTable from './components/initialTable';
 import { getDistance } from 'geolib';
 // import { isElementType } from '@testing-library/user-event/dist/utils';
 
 const App = () => {
-//   const initialState = [];
+  //   const initialState = [];
 
   const [inputValue, setInputValue] = useState('');
   const [culvertObjects, setCulvertObjects] = useState([]);
   const [isCheckedHead, setChecked] = useState('false');
-  //   const [columnCulvertName, setColumnCulvertName] = useState(1)
-  //   const [columnLatitude, setColumnLatitude] = useState(2)
-  //   const [columnLongtitude, setColumnLongitude] = useState(3)
-  //   const [columnLHeight, setColumnHeight] = useState(3)
-
-  // 2 точки оси
-  // длина
-  // уклон
-  // высота насыпи
+  const [pointArr, setInitialRenderArr] = useState([]);
 
   let testArr = [];
   let uniqCulvertsArr = [];
   let uniqKmArr = [];
+  let initialRenderArr = [];
 
   const handleChange = (e) => {
     setInputValue(e.target.value);
   };
 
+  ///первичная загрузка данных
   const dataLoader = (e) => {
-	e.preventDefault();
-	// console.log('ddva')
-	testArr = inputValue.trim().split(`\n`)
-	console.log(testArr)
-  }
+    e.preventDefault();
+    console.log('load');
 
-  //   const handleChangeName = () => {
-  // 	setColumnCulvertName(document.querySelector('#selected-culveret-name').value)
-  //   }
+    testArr = inputValue.trim().split(`\n`);
+    testArr.forEach((elem) => {
+      initialRenderArr.push(elem.split(`,`));
+    });
+    setInitialRenderArr(initialRenderArr);
+  };
 
-  //   const handleChangeLatitude = () => {
-  // 	setColumnLatitude(document.querySelector('#selected-culveret-latitude').value)
-  //   }
-  //   const handleChangeLongitude = () => {
-  // 	setColumnLongitude(document.querySelector('#selected-culveret-longitude').value)
-  //   }
-  //   const handleChangeHeight = () => {
-  // 	setColumnHeight(document.querySelector('#selected-culveret-height').value)
-  //   }
+  //   ///срендерить таблицу
+  //   const initialTableGenerate = (e) => {
+  //     e.preventDefault();
+
+  //     return (
+  //       <>
+
+  //       </>
+  //     );
+  //   };
 
   ///////////////проверка данных/////////////////////
   const firstDataChecker = (e) => {
@@ -58,7 +54,7 @@ const App = () => {
     //   ? (testArr = inputValue.trim().split(`\n`))
     //   : (testArr = inputValue.trim().split(`\n`).slice(1));
 
-	testArr = inputValue.trim().split(`\n`)
+    testArr = inputValue.trim().split(`\n`);
 
     testArr.forEach((elem) => {
       if (elem.split(`,`)[1].split(`_`)[0].includes('tr')) {
@@ -168,16 +164,8 @@ const App = () => {
       });
     });
 
-    // console.log('массив объектов координат точек оси', culvertCoordsArray)
     console.log('массив объектов труб', culvertTotalDataArr);
     setCulvertObjects(culvertTotalDataArr);
-    // console.log(culvertObjects);
-
-    // culvertTotalDataArr.map((culvert)=>{
-    //         <TableRow
-    //           key={culvert.culvertName}
-    //         />
-    // })
   };
 
   return (
@@ -198,13 +186,17 @@ const App = () => {
           ></textarea>
 
           <div className=' buttonContainer p-2'>
-
-            <button
-              className='btn btn-info m-2'
-              onClick={dataLoader}
-            >
-              загрузить таблицу
+            <button className='btn btn-info m-2' onClick={dataLoader}>
+              загрузить данные
             </button>
+
+            {/* <button
+              className='btn btn-primary m-2'
+              id='btnTableGenerate'
+              onClick={initialTableGenerate}
+            >
+              генерировать таблицу
+            </button> */}
 
             <button
               className='btn btn-primary m-2'
@@ -213,8 +205,75 @@ const App = () => {
             >
               проверить данные
             </button>
+          </div>
+        </div>
+      </form>
 
-            {/* <div className='form-check'>
+      <div className='border-2 border-danger p-2'>
+        <table className='table table-hover table-bordered'>
+          {/* <tbody> */}
+          {/* {pointArr && (<InitialTable totalData={po}in/>)} */}
+
+          <InitialTable totalData={pointArr} />
+
+          {/* {pointArr.map((elem) => (
+              <InitialTable
+                totalData={elem}
+                key={elem[1]}
+                id={elem[1]}
+                number={elem[0]}
+              />
+            ))} */}
+        </table>
+
+        <table className='table table-hover table-bordered'>
+          <tbody>
+            {culvertObjects.map((culvert) => (
+              <TableRow
+                key={culvert.culvertName}
+                name={culvert.culvertName}
+                culvertLength={culvert.culvertLength}
+                culvertAxisPointQuantity={culvert.culvertAxisPointQuantity}
+                axisHeightDifference={culvert.axisHeightDifference}
+                culvertSlop={culvert.culvertSlope}
+              />
+            ))}
+            {/* </tbody> */}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+};
+
+export default App;
+
+//   const [columnCulvertName, setColumnCulvertName] = useState(1)
+//   const [columnLatitude, setColumnLatitude] = useState(2)
+//   const [columnLongtitude, setColumnLongitude] = useState(3)
+//   const [columnLHeight, setColumnHeight] = useState(3)
+
+// 2 точки оси
+// длина
+// уклон
+// высота насыпи
+
+//   const handleChangeName = () => {
+// 	setColumnCulvertName(document.querySelector('#selected-culveret-name').value)
+//   }
+
+//   const handleChangeLatitude = () => {
+// 	setColumnLatitude(document.querySelector('#selected-culveret-latitude').value)
+//   }
+//   const handleChangeLongitude = () => {
+// 	setColumnLongitude(document.querySelector('#selected-culveret-longitude').value)
+//   }
+//   const handleChangeHeight = () => {
+// 	setColumnHeight(document.querySelector('#selected-culveret-height').value)
+//   }
+
+{
+  /* <div className='form-check'>
               <input
                 className='form-check-input'
                 type='checkbox'
@@ -301,29 +360,5 @@ const App = () => {
 				<option value='4'>4</option>
 				<option value='5'>5</option>
               </select>
-            </div> */}
-          </div>
-        </div>
-      </form>
-      {/* <MainTable /> */}
-      <div className='border-2 border-danger p-2'>
-        <table className='table table-hover table-bordered'>
-          <tbody>
-            {culvertObjects.map((culvert) => (
-              <TableRow
-                key={culvert.culvertName}
-                name={culvert.culvertName}
-                culvertLength={culvert.culvertLength}
-                culvertAxisPointQuantity={culvert.culvertAxisPointQuantity}
-                axisHeightDifference={culvert.axisHeightDifference}
-                culvertSlop={culvert.culvertSlope}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-};
-
-export default App;
+            </div> */
+}
