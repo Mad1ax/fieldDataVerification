@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-// import InputForm from './components/inputForm';
-
 import TableRow from './components/tableRow';
-import InitialTable from './components/initialTable';
 import { getDistance } from 'geolib';
-// import { isElementType } from '@testing-library/user-event/dist/utils';
+import TableHead from './components/tableHead';
+import KmTable from './components/kmTable';
 
 const App = () => {
   //   const initialState = [];
@@ -13,11 +11,13 @@ const App = () => {
   const [culvertObjects, setCulvertObjects] = useState([]);
   const [isCheckedHead, setChecked] = useState('false');
   const [pointArr, setInitialRenderArr] = useState([]);
+  const [kmMarkerArr, setKmMarkerArr] = useState([]);
 
   let testArr = [];
   let uniqCulvertsArr = [];
   let uniqKmArr = [];
   let initialRenderArr = [];
+  let filteredUniqKmArr = [];
 
   const handleChange = (e) => {
     setInputValue(e.target.value);
@@ -71,13 +71,14 @@ const App = () => {
     );
 
     let setKm = new Set(uniqKmArr);
-    let filteredUniqKmArr = [...setKm].sort((a, b) =>
+    filteredUniqKmArr = [...setKm].sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
     console.log('фильтруем и сортируем трубы и километровые');
     console.log('уникальные трубы', filteredUniqCulvertsArr);
     console.log('уникальные км', filteredUniqKmArr);
+    setKmMarkerArr(filteredUniqKmArr);
 
     let culvertTotalDataArr = [];
     let currentCulvertObject = {};
@@ -89,10 +90,13 @@ const App = () => {
     let currentCulvertHeight1;
     let currentCulvertHeight2;
 
+    let currentCulvetRoadAxisQuantity = 0;
+    let currentCulvetRoadsideQuantity = 0;
+
     filteredUniqCulvertsArr.forEach((uniqCulvert) => {
       testArr.forEach((elem) => {
         if (elem.split(`,`)[1].split(`_`)[0] === uniqCulvert) {
-          if (elem.split(`,`)[elem.split(`,`).length - 1] === 'ось трубы') {
+          if (elem.split(`,`)[5] === 'ось трубы') {
             currentCulvetAxisQuantity++;
             culvertCoordsObject = {
               culvertName: uniqCulvert,
@@ -103,17 +107,28 @@ const App = () => {
             };
             culvertCoordsArray.push(culvertCoordsObject);
           }
+          if (elem.split(`,`)[5] === 'ось дороги') {
+            currentCulvetRoadAxisQuantity++;
+          }
+          if (elem.split(`,`)[5] === 'бровка') {
+            currentCulvetRoadsideQuantity++;
+          }
         }
       });
+
       currentCulvertObject = {
         culvertName: uniqCulvert,
         culvertLength: 0,
         culvertAxisPointQuantity: currentCulvetAxisQuantity,
+        culvertRoadsideQuantity: currentCulvetRoadAxisQuantity,
+        culvertRoadAxisQuantity: currentCulvetRoadAxisQuantity,
         axisHeightDifference: 0,
         culvertSlope: 0,
       };
 
       currentCulvetAxisQuantity = 0;
+      currentCulvetRoadAxisQuantity = 0;
+      currentCulvetRoadsideQuantity = 0;
       culvertTotalDataArr.push(currentCulvertObject);
     });
 
@@ -186,9 +201,9 @@ const App = () => {
           ></textarea>
 
           <div className=' buttonContainer p-2'>
-            <button className='btn btn-info m-2' onClick={dataLoader}>
+            {/* <button className='btn btn-info m-2' onClick={dataLoader}>
               загрузить данные
-            </button>
+            </button> */}
 
             {/* <button
               className='btn btn-primary m-2'
@@ -205,28 +220,49 @@ const App = () => {
             >
               проверить данные
             </button>
+
+            <div className='border border-primary rounded m-2'>
+              <h5 className='text-danger'>Внимание:</h5>
+              <h6 className='font-weight-bold'>
+                {' '}
+                Формат исходных данных должен иметь следующий вид:
+              </h6>
+              №, Имя трубы, Широта, Долгота, Высотная отметка, Тип точки
+              <br></br>
+              разделитель - запятая
+              <br></br>
+              остальные колонны с данными могут быть любыми
+            </div>
           </div>
         </div>
       </form>
 
       <div className='border-2 border-danger p-2'>
+		в загруженных данных {kmMarkerArr.length} километровых и {culvertObjects.length} труб
+
+
+	  </div>
+
+
+      <div className='border-2 border-danger p-2'>
+        <h5>Километровые столбы: {kmMarkerArr.length} штук </h5>
         <table className='table table-hover table-bordered'>
-          {/* <tbody> */}
-          {/* {pointArr && (<InitialTable totalData={po}in/>)} */}
-
-          <InitialTable totalData={pointArr} />
-
-          {/* {pointArr.map((elem) => (
-              <InitialTable
-                totalData={elem}
-                key={elem[1]}
-                id={elem[1]}
-                number={elem[0]}
-              />
-            ))} */}
+          <tbody>
+            <tr>
+              {kmMarkerArr.map((elem) => (
+                <KmTable key={elem} currentKm={elem} total={kmMarkerArr} />
+              ))}
+            </tr>
+          </tbody>
         </table>
+      </div>
 
+      <div className='border-2 border-danger p-2'>
+        <h5>Трубы: {culvertObjects.length} штук</h5>
         <table className='table table-hover table-bordered'>
+          <thead>
+            <TableHead />
+          </thead>
           <tbody>
             {culvertObjects.map((culvert) => (
               <TableRow
@@ -236,6 +272,8 @@ const App = () => {
                 culvertAxisPointQuantity={culvert.culvertAxisPointQuantity}
                 axisHeightDifference={culvert.axisHeightDifference}
                 culvertSlop={culvert.culvertSlope}
+                culvertRoadsideQuantity={culvert.culvertRoadsideQuantity}
+                culvertRoadAxisQuantity={culvert.culvertRoadAxisQuantity}
               />
             ))}
             {/* </tbody> */}

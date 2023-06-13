@@ -6,15 +6,19 @@ const TableRow = ({
   culvertAxisPointQuantity,
   axisHeightDifference,
   culvertSlop,
+  culvertRoadsideQuantity,
+  culvertRoadAxisQuantity,
 }) => {
   return (
     <>
       <tr>
-        <td >труба: {name}</td>
-        <td >длина: {culvertLength} м.</td>
-        <td >точек оси: {culvertAxisPointQuantity}</td>
+        <td className='mainTableCeil'>{name}</td>
+        <td className='mainTableCeil'>{culvertLength}</td>
+        <td className='mainTableCeil'>{culvertAxisPointQuantity}</td>
+        <td className='mainTableCeil'>{culvertRoadAxisQuantity}</td>
+        <td className='mainTableCeil'>{culvertRoadsideQuantity}</td>
         {/* <td >разница высот: {axisHeightDifference}</td> */}
-        <td >уклон: {culvertSlop} ‰</td>
+        <td className='mainTableCeil'>{culvertSlop}</td>
       </tr>
     </>
   );
