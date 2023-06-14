@@ -21,6 +21,7 @@ code {
 .inputContainer {
   display: grid;
   grid-template-columns: 80% 20%;
+  min-height: 400px;
 }
 
 .buttonContainer {
@@ -30,11 +31,11 @@ code {
   text-align: center;
 }
 
+
 .mainTableCeil {
 	width: 15%;
 }
 
 .kmTableCeil {
-	width: 5%;
-
+	width: 30px;
 }

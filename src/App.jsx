@@ -1,62 +1,39 @@
 import React, { useState } from 'react';
-import TableRow from './components/tableRow';
 import { getDistance } from 'geolib';
+import _ from 'lodash';
+
+import TableRow from './components/tableRow';
 import TableHead from './components/tableHead';
-import KmTable from './components/kmTable';
+import KmRow from './components/kmRow';
 
 const App = () => {
-  //   const initialState = [];
-
   const [inputValue, setInputValue] = useState('');
   const [culvertObjects, setCulvertObjects] = useState([]);
-  const [isCheckedHead, setChecked] = useState('false');
-  const [pointArr, setInitialRenderArr] = useState([]);
   const [kmMarkerArr, setKmMarkerArr] = useState([]);
+  const [kmMarkerArrComponent, setKmMarkerArrComponent] = useState([]);
+  const [infoBlock, setInfoBlock] = useState(false);
+  const [kmMarkerArea, setKmMarkerArea] = useState([]);
+  const [numberVerifiedCulverts, setNumberVerifiedCulverts] = useState(0);
+  const [isLoading, setLoading] = useState(false);
 
-  let testArr = [];
+  let dataArr = [];
   let uniqCulvertsArr = [];
   let uniqKmArr = [];
-  let initialRenderArr = [];
   let filteredUniqKmArr = [];
 
-  const handleChange = (e) => {
-    setInputValue(e.target.value);
-  };
+  //отслеживание изменения textarea
+  const handleChange = (e) => setInputValue(e.target.value);
 
-  ///первичная загрузка данных
-  const dataLoader = (e) => {
-    e.preventDefault();
-    console.log('load');
+  //обработка и проверка данных
+  const firstDataChecker = () => {
+    //проверка на наличие шапки
+    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'tr' ||
+    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'km'
+      ? (dataArr = inputValue.trim().split(`\n`))
+      : (dataArr = inputValue.trim().split(`\n`).slice(1));
 
-    testArr = inputValue.trim().split(`\n`);
-    testArr.forEach((elem) => {
-      initialRenderArr.push(elem.split(`,`));
-    });
-    setInitialRenderArr(initialRenderArr);
-  };
-
-  //   ///срендерить таблицу
-  //   const initialTableGenerate = (e) => {
-  //     e.preventDefault();
-
-  //     return (
-  //       <>
-
-  //       </>
-  //     );
-  //   };
-
-  ///////////////проверка данных/////////////////////
-  const firstDataChecker = (e) => {
-    e.preventDefault();
-
-    // isCheckedHead
-    //   ? (testArr = inputValue.trim().split(`\n`))
-    //   : (testArr = inputValue.trim().split(`\n`).slice(1));
-
-    testArr = inputValue.trim().split(`\n`);
-
-    testArr.forEach((elem) => {
+    //поиск уникальных труб и км
+    dataArr.forEach((elem) => {
       if (elem.split(`,`)[1].split(`_`)[0].includes('tr')) {
         uniqCulvertsArr.push(elem.split(`,`)[1].split(`_`)[0]);
       }
@@ -65,6 +42,7 @@ const App = () => {
       }
     });
 
+    //фильтрация и сортировка массивов уникальных труб и км
     let setCulveret = new Set(uniqCulvertsArr);
     let filteredUniqCulvertsArr = [...setCulveret].sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
@@ -75,10 +53,28 @@ const App = () => {
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
-    console.log('фильтруем и сортируем трубы и километровые');
     console.log('уникальные трубы', filteredUniqCulvertsArr);
     console.log('уникальные км', filteredUniqKmArr);
+
+    //установка участка километровых столбов
     setKmMarkerArr(filteredUniqKmArr);
+    if (filteredUniqKmArr.length > 0) {
+      setKmMarkerArea([
+        filteredUniqKmArr[0],
+        filteredUniqKmArr[filteredUniqKmArr.length - 1],
+      ]);
+    } else {
+      setKmMarkerArea([]);
+    }
+
+    //создание 2-мерного массива км-знаков для передачи в компонент
+    let firstLevelKmArr = [];
+    let totalKmArr = [];
+    for (let i = 0; i <= Math.ceil(filteredUniqKmArr.length / 20); i++) {
+      firstLevelKmArr = _.slice(filteredUniqKmArr, [20 * i], [20 * (i + 1)]);
+      totalKmArr.push(firstLevelKmArr);
+    }
+    setKmMarkerArrComponent(totalKmArr);
 
     let culvertTotalDataArr = [];
     let currentCulvertObject = {};
@@ -89,12 +85,13 @@ const App = () => {
     let currentCulvertCoord2;
     let currentCulvertHeight1;
     let currentCulvertHeight2;
-
     let currentCulvetRoadAxisQuantity = 0;
     let currentCulvetRoadsideQuantity = 0;
+    let verifiedCulverts = 0;
 
+    //создание массива с данными по трубам
     filteredUniqCulvertsArr.forEach((uniqCulvert) => {
-      testArr.forEach((elem) => {
+      dataArr.forEach((elem) => {
         if (elem.split(`,`)[1].split(`_`)[0] === uniqCulvert) {
           if (elem.split(`,`)[5] === 'ось трубы') {
             currentCulvetAxisQuantity++;
@@ -120,10 +117,11 @@ const App = () => {
         culvertName: uniqCulvert,
         culvertLength: 0,
         culvertAxisPointQuantity: currentCulvetAxisQuantity,
-        culvertRoadsideQuantity: currentCulvetRoadAxisQuantity,
+        culvertRoadsideQuantity: currentCulvetRoadsideQuantity,
         culvertRoadAxisQuantity: currentCulvetRoadAxisQuantity,
         axisHeightDifference: 0,
         culvertSlope: 0,
+        isVerifiedCulvert: false,
       };
 
       currentCulvetAxisQuantity = 0;
@@ -132,6 +130,7 @@ const App = () => {
       culvertTotalDataArr.push(currentCulvertObject);
     });
 
+    //обновляем данные в созданном массиве труб
     filteredUniqCulvertsArr.forEach((uniqCulvert) => {
       culvertCoordsArray.forEach((point) => {
         if (
@@ -160,13 +159,18 @@ const App = () => {
             0.01
           );
 
+          //расчет длины трубы
           culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertLength =
             Number(currentCulvertLength.toFixed(3));
+
+          //расчет разницы высотных отметок
           culvertTotalDataArr[
             point.culvertName.slice(2) - 1
           ].axisHeightDifference = Number(
             Math.abs(currentCulvertHeight2 - currentCulvertHeight1).toFixed(3)
           );
+
+          //расчет уклона трубы по оси
           culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertSlope =
             Number(
               (
@@ -175,12 +179,84 @@ const App = () => {
                 1000
               ).toFixed(2)
             );
+
+          //верификация текущей трубы
+          if (
+            currentCulvertLength > 3 &&
+            currentCulvertLength < 150 &&
+            culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertSlope <
+              600 &&
+            culvertTotalDataArr[point.culvertName.slice(2) - 1]
+              .culvertAxisPointQuantity === 2 &&
+            culvertTotalDataArr[point.culvertName.slice(2) - 1]
+              .culvertRoadsideQuantity >= 2 &&
+            culvertTotalDataArr[point.culvertName.slice(2) - 1]
+              .culvertRoadAxisQuantity >= 1
+          ) {
+            culvertTotalDataArr[
+              point.culvertName.slice(2) - 1
+            ].isVerifiedCulvert = true;
+            verifiedCulverts += 1;
+          }
         }
       });
     });
 
+    setNumberVerifiedCulverts(verifiedCulverts);
+    verifiedCulverts = 0;
     console.log('массив объектов труб', culvertTotalDataArr);
+
+    setInfoBlock(true);
     setCulvertObjects(culvertTotalDataArr);
+    setLoading(false);
+  };
+
+  //   const loadTextFileFunc = () => {
+  //     console.log('loading');
+  //   };
+
+  //   function readFile(input) {
+  //     let file = input.files[0];
+  //     let reader = new FileReader();
+  //     reader.readAsText(file);
+  //     reader.onload = function () {
+  //       console.log(reader.result);
+  //     };
+
+  //     reader.onerror = function () {
+  //       console.log(reader.error);
+  //     };
+  //   }
+
+  //загрузка текстового файла
+  const fileLoader = (event) => {
+    var file = event.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function (event) {
+      // The file's text will be printed here
+      //   console.log(event.target.result);
+
+      setInputValue('');
+      setInputValue(event.target.result);
+      //   console.log(inputValue);
+    };
+    reader.readAsText(file);
+    // firstDataChecker();
+  };
+
+  //zagruska2
+  const handleFile = (e) => {
+    const content = e.target.result;
+    console.log('file content', content);
+	setInputValue(content)
+    // You can set content in state and show it in render.
+  };
+
+  const handleChangeFile = (file) => {
+    let fileData = new FileReader();
+    fileData.onloadend = handleFile;
+    fileData.readAsText(file);
+	firstDataChecker()
   };
 
   return (
@@ -201,28 +277,36 @@ const App = () => {
           ></textarea>
 
           <div className=' buttonContainer p-2'>
-            {/* <button className='btn btn-info m-2' onClick={dataLoader}>
-              загрузить данные
-            </button> */}
-
-            {/* <button
-              className='btn btn-primary m-2'
-              id='btnTableGenerate'
-              onClick={initialTableGenerate}
-            >
-              генерировать таблицу
-            </button> */}
-
             <button
               className='btn btn-primary m-2'
               id='buttonTest'
+              type='button'
               onClick={firstDataChecker}
             >
               проверить данные
             </button>
 
+            {/* <button
+              className='btn btn-primary m-2'
+              id='buttonTest'
+              type='button'
+              onClick={loadTextFileFunc}
+            >
+              загрузить файл
+            </button> */}
+
+            <input type='file' onChange={fileLoader}></input>
+
+            <div>
+              <input
+                type='file'
+                accept='.txt'
+                onChange={(e) => handleChangeFile(e.target.files[0])}
+              />
+            </div>
+
             <div className='border border-primary rounded m-2'>
-              <h5 className='text-danger'>Внимание:</h5>
+              <h5 className='text-danger'>Внимание!</h5>
               <h6 className='font-weight-bold'>
                 {' '}
                 Формат исходных данных должен иметь следующий вид:
@@ -237,166 +321,105 @@ const App = () => {
         </div>
       </form>
 
-      <div className='border-2 border-danger p-2'>
-		в загруженных данных {kmMarkerArr.length} километровых и {culvertObjects.length} труб
+      {infoBlock && (
+        <div>
+          <div className='border-2 border-danger p-2'>
+            <h5>
+              Километровые столбы: {kmMarkerArr.length} шт.{' '}
+              {kmMarkerArea.length === 2 && (
+                <div>
+                  На участке {kmMarkerArea[0].slice(2)}-
+                  {kmMarkerArea[1].slice(2)}
+                </div>
+              )}
+            </h5>
+            <table className='table table-hover table-bordered km-table'>
+              <tbody>
+                {kmMarkerArrComponent.map((elem) => (
+                  <KmRow key={elem} currentRow={elem} />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
+          <div className='border-2 border-danger p-2'>
+            <h5>
+              Водопропускные трубы: {culvertObjects.length} шт.
+              {numberVerifiedCulverts > 0 ? (
+                <div>Верифицированны: {numberVerifiedCulverts} шт.</div>
+              ) : (
+                <div>Верифицированных труб нет</div>
+              )}
+            </h5>
 
-	  </div>
-
-
-      <div className='border-2 border-danger p-2'>
-        <h5>Километровые столбы: {kmMarkerArr.length} штук </h5>
-        <table className='table table-hover table-bordered'>
-          <tbody>
-            <tr>
-              {kmMarkerArr.map((elem) => (
-                <KmTable key={elem} currentKm={elem} total={kmMarkerArr} />
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className='border-2 border-danger p-2'>
-        <h5>Трубы: {culvertObjects.length} штук</h5>
-        <table className='table table-hover table-bordered'>
-          <thead>
-            <TableHead />
-          </thead>
-          <tbody>
-            {culvertObjects.map((culvert) => (
-              <TableRow
-                key={culvert.culvertName}
-                name={culvert.culvertName}
-                culvertLength={culvert.culvertLength}
-                culvertAxisPointQuantity={culvert.culvertAxisPointQuantity}
-                axisHeightDifference={culvert.axisHeightDifference}
-                culvertSlop={culvert.culvertSlope}
-                culvertRoadsideQuantity={culvert.culvertRoadsideQuantity}
-                culvertRoadAxisQuantity={culvert.culvertRoadAxisQuantity}
-              />
-            ))}
-            {/* </tbody> */}
-          </tbody>
-        </table>
-      </div>
+            <table className='table table-hover table-bordered'>
+              <thead>
+                <TableHead />
+              </thead>
+              <tbody>
+                {culvertObjects.map((culvert) => (
+                  <TableRow
+                    key={culvert.culvertName}
+                    name={culvert.culvertName}
+                    culvertLength={culvert.culvertLength}
+                    culvertAxisPointQuantity={culvert.culvertAxisPointQuantity}
+                    axisHeightDifference={culvert.axisHeightDifference}
+                    culvertSlop={culvert.culvertSlope}
+                    culvertRoadsideQuantity={culvert.culvertRoadsideQuantity}
+                    culvertRoadAxisQuantity={culvert.culvertRoadAxisQuantity}
+                    verifiedCulvert={culvert.isVerifiedCulvert}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
 export default App;
 
-//   const [columnCulvertName, setColumnCulvertName] = useState(1)
-//   const [columnLatitude, setColumnLatitude] = useState(2)
-//   const [columnLongtitude, setColumnLongitude] = useState(3)
-//   const [columnLHeight, setColumnHeight] = useState(3)
+{
+  /* <input type="file" onchange="readFile(this)">
 
-// 2 точки оси
-// длина
-// уклон
-// высота насыпи
+<script>
+function readFile(input) {
+  let file = input.files[0];
 
-//   const handleChangeName = () => {
-// 	setColumnCulvertName(document.querySelector('#selected-culveret-name').value)
-//   }
+  let reader = new FileReader();
 
-//   const handleChangeLatitude = () => {
-// 	setColumnLatitude(document.querySelector('#selected-culveret-latitude').value)
-//   }
-//   const handleChangeLongitude = () => {
-// 	setColumnLongitude(document.querySelector('#selected-culveret-longitude').value)
-//   }
-//   const handleChangeHeight = () => {
-// 	setColumnHeight(document.querySelector('#selected-culveret-height').value)
-//   }
+  reader.readAsText(file);
+
+  reader.onload = function() {
+    console.log(reader.result);
+  };
+
+  reader.onerror = function() {
+    console.log(reader.error);
+  };
+
+}
+</script> */
+}
+
+// const loaderSetter = () =>
+// !isLoading ? setLoading(true) : setLoading(false);
+
+// {isLoading && (
+// 	<div className='d-flex justify-content-center'>
+// 	  <div className='spinner-border text-primary' role='status'></div>
+// 	</div>
+//   )}
 
 {
-  /* <div className='form-check'>
-              <input
-                className='form-check-input'
-                type='checkbox'
-                value=''
-                id='flexCheckIndeterminate'
-                onChange={() => setChecked((state) => !state)}
-              />
-              <label
-                className='form-check-label'
-                htmlFor='flexCheckIndeterminate'
-              >
-                Наличие шапки
-              </label>
-            </div>
-
-            <div className='form-group'>
-              <select
-                className='form-select form-select-sm m-1'
-                aria-label='.form-select-sm example'
-                required
-                defaultValue='имя трубы'
-				id='selected-culveret-name'
-				onChange={handleChangeName}
-              >
-                <option value=''>Имя трубы</option>
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-				<option value='4'>4</option>
-				<option value='5'>5</option>
-              </select>
-            </div>
-
-            <div className='form-group'>
-              <select
-                className='form-select form-select-sm m-1'
-                aria-label='.form-select-sm example'
-                required
-                defaultValue='широта'
-				id='selected-culveret-latitude'
-				onChange={handleChangeLatitude}
-              >
-                <option value=''>Широта</option>
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-				<option value='4'>4</option>
-				<option value='5'>5</option>
-              </select>
-            </div>
-
-            <div className='form-group'>
-              <select
-                className='form-select form-select-sm m-1'
-                aria-label='.form-select-sm example'
-                required
-                defaultValue='долгота'
-				id='selected-culveret-longitude'
-				onChange={handleChangeLongitude}
-              >
-                <option value=''>Долгота</option>
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-				<option value='4'>4</option>
-				<option value='5'>5</option>
-
-              </select>
-            </div>
-
-            <div className='form-group'>
-              <select
-                className='form-select form-select-sm m-1'
-                aria-label='.form-select-sm example'
-                required
-                defaultValue='высотная отметка'
-				id='selected-culveret-height'
-				onChange={handleChangeHeight}
-              >
-                <option value=''>Высотная отметка</option>
-                <option value='1'>1</option>
-                <option value='2'>2</option>
-                <option value='3'>3</option>
-				<option value='4'>4</option>
-				<option value='5'>5</option>
-              </select>
-            </div> */
+  /* <button
+className='btn btn-primary m-2'
+id='buttonTest'
+type='button'
+onClick={loaderSetter}
+>
+лоадер
+</button> */
 }
