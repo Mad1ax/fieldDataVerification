@@ -5,6 +5,13 @@ import _ from 'lodash';
 import TableRow from './components/tableRow';
 import TableHead from './components/tableHead';
 import KmRow from './components/kmRow';
+import InfoBlock from './components/infoBlock';
+
+
+//загрузка тогоже файла
+//loader
+//проверка на наличие данных в инпуте
+//отправка данных
 
 const App = () => {
   const [inputValue, setInputValue] = useState('');
@@ -15,10 +22,13 @@ const App = () => {
   const [kmMarkerArea, setKmMarkerArea] = useState([]);
   const [numberVerifiedCulverts, setNumberVerifiedCulverts] = useState(0);
   const [isLoading, setLoading] = useState(false);
+  const [isFileLoaded, setFileLoaded] = useState(false);
+  const [loadedFileName, setLoadedFileName] = useState('');
 
   let dataArr = [];
   let uniqCulvertsArr = [];
   let uniqKmArr = [];
+  let filteredUniqCulvertsArr = [];
   let filteredUniqKmArr = [];
 
   //отслеживание изменения textarea
@@ -26,7 +36,7 @@ const App = () => {
 
   //обработка и проверка данных
   const firstDataChecker = () => {
-    //проверка на наличие шапки
+    // проверка на наличие шапки
     inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'tr' ||
     inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'km'
       ? (dataArr = inputValue.trim().split(`\n`))
@@ -44,7 +54,7 @@ const App = () => {
 
     //фильтрация и сортировка массивов уникальных труб и км
     let setCulveret = new Set(uniqCulvertsArr);
-    let filteredUniqCulvertsArr = [...setCulveret].sort((a, b) =>
+    filteredUniqCulvertsArr = [...setCulveret].sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
@@ -88,12 +98,13 @@ const App = () => {
     let currentCulvetRoadAxisQuantity = 0;
     let currentCulvetRoadsideQuantity = 0;
     let verifiedCulverts = 0;
+    let culvertIndex;
 
     //создание массива с данными по трубам
     filteredUniqCulvertsArr.forEach((uniqCulvert) => {
       dataArr.forEach((elem) => {
         if (elem.split(`,`)[1].split(`_`)[0] === uniqCulvert) {
-          if (elem.split(`,`)[5] === 'ось трубы') {
+          if (elem.split(`,`)[5].includes('ось трубы')) {
             currentCulvetAxisQuantity++;
             culvertCoordsObject = {
               culvertName: uniqCulvert,
@@ -102,12 +113,13 @@ const App = () => {
               axisPointLong: elem.split(`,`)[3],
               axisPointHeight: elem.split(`,`)[4],
             };
+
             culvertCoordsArray.push(culvertCoordsObject);
           }
-          if (elem.split(`,`)[5] === 'ось дороги') {
+          if (elem.split(`,`)[5].includes('ось дороги')) {
             currentCulvetRoadAxisQuantity++;
           }
-          if (elem.split(`,`)[5] === 'бровка') {
+          if (elem.split(`,`)[5].includes('бровка')) {
             currentCulvetRoadsideQuantity++;
           }
         }
@@ -159,43 +171,36 @@ const App = () => {
             0.01
           );
 
-          //расчет длины трубы
-          culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertLength =
-            Number(currentCulvertLength.toFixed(3));
+          culvertIndex = _.indexOf(filteredUniqCulvertsArr, uniqCulvert);
+
+          culvertTotalDataArr[culvertIndex].culvertLength = Number(
+            currentCulvertLength.toFixed(3)
+          );
 
           //расчет разницы высотных отметок
-          culvertTotalDataArr[
-            point.culvertName.slice(2) - 1
-          ].axisHeightDifference = Number(
+          culvertTotalDataArr[culvertIndex].axisHeightDifference = Number(
             Math.abs(currentCulvertHeight2 - currentCulvertHeight1).toFixed(3)
           );
 
           //расчет уклона трубы по оси
-          culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertSlope =
-            Number(
-              (
-                (Math.abs(currentCulvertHeight2 - currentCulvertHeight1) /
-                  currentCulvertLength.toFixed(2)) *
-                1000
-              ).toFixed(2)
-            );
+          culvertTotalDataArr[culvertIndex].culvertSlope = Number(
+            (
+              (Math.abs(currentCulvertHeight2 - currentCulvertHeight1) /
+                currentCulvertLength.toFixed(2)) *
+              1000
+            ).toFixed(2)
+          );
 
           //верификация текущей трубы
           if (
             currentCulvertLength > 3 &&
             currentCulvertLength < 150 &&
-            culvertTotalDataArr[point.culvertName.slice(2) - 1].culvertSlope <
-              600 &&
-            culvertTotalDataArr[point.culvertName.slice(2) - 1]
-              .culvertAxisPointQuantity === 2 &&
-            culvertTotalDataArr[point.culvertName.slice(2) - 1]
-              .culvertRoadsideQuantity >= 2 &&
-            culvertTotalDataArr[point.culvertName.slice(2) - 1]
-              .culvertRoadAxisQuantity >= 1
+            culvertTotalDataArr[culvertIndex].culvertSlope < 600 &&
+            culvertTotalDataArr[culvertIndex].culvertAxisPointQuantity === 2 &&
+            culvertTotalDataArr[culvertIndex].culvertRoadsideQuantity >= 2 &&
+            culvertTotalDataArr[culvertIndex].culvertRoadAxisQuantity >= 1
           ) {
-            culvertTotalDataArr[
-              point.culvertName.slice(2) - 1
-            ].isVerifiedCulvert = true;
+            culvertTotalDataArr[culvertIndex].isVerifiedCulvert = true;
             verifiedCulverts += 1;
           }
         }
@@ -205,59 +210,41 @@ const App = () => {
     setNumberVerifiedCulverts(verifiedCulverts);
     verifiedCulverts = 0;
     console.log('массив объектов труб', culvertTotalDataArr);
-
     setInfoBlock(true);
     setCulvertObjects(culvertTotalDataArr);
     setLoading(false);
   };
 
-  //   const loadTextFileFunc = () => {
-  //     console.log('loading');
-  //   };
-
-  //   function readFile(input) {
-  //     let file = input.files[0];
-  //     let reader = new FileReader();
-  //     reader.readAsText(file);
-  //     reader.onload = function () {
-  //       console.log(reader.result);
-  //     };
-
-  //     reader.onerror = function () {
-  //       console.log(reader.error);
-  //     };
-  //   }
+  //очистка содержимого
+  const inputClear = () => {
+    setInputValue('');
+    setInfoBlock(false);
+    setFileLoaded(false);
+  };
 
   //загрузка текстового файла
   const fileLoader = (event) => {
-    var file = event.target.files[0];
-    var reader = new FileReader();
+    setFileLoaded(true);
+    let file = event.target.files[0];
+    let reader = new FileReader();
     reader.onload = function (event) {
-      // The file's text will be printed here
-      //   console.log(event.target.result);
-
+      let currentTextareaValue = event.target.result;
       setInputValue('');
-      setInputValue(event.target.result);
-      //   console.log(inputValue);
+      setInputValue(currentTextareaValue);
     };
+
+    console.log('загружаю файл', file.name);
+    setLoadedFileName(file.name);
     reader.readAsText(file);
-    // firstDataChecker();
   };
 
-  //zagruska2
-  const handleFile = (e) => {
-    const content = e.target.result;
-    console.log('file content', content);
-	setInputValue(content)
-    // You can set content in state and show it in render.
-  };
+  //тест
+  //   let testClass = '';
+  //   const testFunc = (event) => {
+  //     console.log(event.target);
+  //   };
 
-  const handleChangeFile = (file) => {
-    let fileData = new FileReader();
-    fileData.onloadend = handleFile;
-    fileData.readAsText(file);
-	firstDataChecker()
-  };
+  let sendData = () => console.log('sending')
 
   return (
     <>
@@ -270,7 +257,7 @@ const App = () => {
             className='form-control'
             id='inputText'
             name='inputText'
-            placeholder='вставь данные сюда'
+            placeholder='>>вставь данные сюда или выбери текстовый файл<<'
             rows='10'
             value={inputValue}
             onChange={handleChange}
@@ -278,48 +265,61 @@ const App = () => {
 
           <div className=' buttonContainer p-2'>
             <button
-              className='btn btn-primary m-2'
-              id='buttonTest'
+              className='btn btn-primary m-2 border-secondary'
+              id='func-buttons'
               type='button'
               onClick={firstDataChecker}
             >
               проверить данные
             </button>
 
-            {/* <button
-              className='btn btn-primary m-2'
-              id='buttonTest'
+            <div className='spanContainer'>
+              <label className='input-file'>
+                <input
+                  type='file'
+                  className='form-control'
+                  id='inputGroupFile04'
+                  aria-describedby='inputGroupFileAddon04'
+                  onChange={fileLoader}
+                  aria-label='Upload'
+                />
+                <span id='spanButton' className='bg-primary'>
+                  выбрать файл
+                </span>
+              </label>
+            </div>
+
+			<button
+              className='btn btn-warning m-2 border-secondary'
+              id='func-buttons'
               type='button'
-              onClick={loadTextFileFunc}
+              onClick={sendData}
             >
-              загрузить файл
-            </button> */}
+              отправить данные
+            </button>
 
-            <input type='file' onChange={fileLoader}></input>
+            {isFileLoaded && (
+              <div className='font-weight-bold'>загружен {loadedFileName}</div>
+            )}
 
-            <div>
-              <input
-                type='file'
-                accept='.txt'
-                onChange={(e) => handleChangeFile(e.target.files[0])}
-              />
-            </div>
-
-            <div className='border border-primary rounded m-2'>
-              <h5 className='text-danger'>Внимание!</h5>
-              <h6 className='font-weight-bold'>
-                {' '}
-                Формат исходных данных должен иметь следующий вид:
-              </h6>
-              №, Имя трубы, Широта, Долгота, Высотная отметка, Тип точки
-              <br></br>
-              разделитель - запятая
-              <br></br>
-              остальные колонны с данными могут быть любыми
-            </div>
+            <button
+              className='btn btn-info m-2 border-secondary'
+              type='button'
+              id='func-buttons'
+              onClick={inputClear}
+            >
+              очистить данные
+            </button>
+            <InfoBlock />
           </div>
         </div>
       </form>
+
+      {/* {isLoading && (
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border text-primary" role="status"></div>
+        </div>
+      )} */}
 
       {infoBlock && (
         <div>
@@ -353,9 +353,7 @@ const App = () => {
             </h5>
 
             <table className='table table-hover table-bordered'>
-              <thead>
                 <TableHead />
-              </thead>
               <tbody>
                 {culvertObjects.map((culvert) => (
                   <TableRow
@@ -380,46 +378,3 @@ const App = () => {
 };
 
 export default App;
-
-{
-  /* <input type="file" onchange="readFile(this)">
-
-<script>
-function readFile(input) {
-  let file = input.files[0];
-
-  let reader = new FileReader();
-
-  reader.readAsText(file);
-
-  reader.onload = function() {
-    console.log(reader.result);
-  };
-
-  reader.onerror = function() {
-    console.log(reader.error);
-  };
-
-}
-</script> */
-}
-
-// const loaderSetter = () =>
-// !isLoading ? setLoading(true) : setLoading(false);
-
-// {isLoading && (
-// 	<div className='d-flex justify-content-center'>
-// 	  <div className='spinner-border text-primary' role='status'></div>
-// 	</div>
-//   )}
-
-{
-  /* <button
-className='btn btn-primary m-2'
-id='buttonTest'
-type='button'
-onClick={loaderSetter}
->
-лоадер
-</button> */
-}

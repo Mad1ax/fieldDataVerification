@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  width: 1080;
 }
 
 code {
@@ -18,16 +19,51 @@ code {
   margin: 10px;
 }
 
+textarea::placeholder {
+  /* font-weight: bold; */
+  text-align: center;
+}
+
+.buttonContainer button, #spanButton{
+	width: 220px;
+}
+
+
+#accordion{
+	margin-top: 5px;
+
+}
+
+
 .inputContainer {
   display: grid;
-  grid-template-columns: 80% 20%;
-  min-height: 400px;
+  grid-template-columns: 800px 250px;
+  min-height: 200px;
+}
+
+#collapseOne {
+	padding: 0px;
+}
+
+/* #collapseTarget {
+	margin: 0px;
+	width: 232px;
+} */
+/* .card {
+	margin-left: 10px;
+} */
+
+/* .buttonContainer {
+	width: 230px;
+} */
+
+.card-body {
+	margin: 0;
 }
 
 .buttonContainer {
   display: flex;
   flex-direction: column;
-  /* justify-content: space-between; */
   text-align: center;
 }
 
@@ -39,3 +75,52 @@ code {
 .kmTableCeil {
 	width: 30px;
 }
+
+
+.input-file {
+	position: relative;
+	display: inline-block;
+}
+.input-file span {
+	position: relative;
+	display: inline-block;
+	cursor: pointer;
+	outline: none;
+	text-decoration: none;
+	/* font-size: 14px; */
+	vertical-align: middle;
+	color: rgb(255 255 255);
+	text-align: center;
+
+  border: 1px solid #6c757d;
+	border-radius: 6px;
+	/* background-color: #419152; */
+	/* line-height: 22px; */
+	height: 38px;
+  width: 93%;
+	padding: 5px;
+	box-sizing: border-box;
+	/* border: none; */
+	margin: 0;
+	transition: background-color 0.2s;
+}
+.input-file input[type=file] {
+	position: absolute;
+	z-index: -1;
+	opacity: 0;
+	display: block;
+}
+
+.spanContainer{
+	/* margin-left: 9px; */
+	display: flex;
+	margin: 9px;
+}
+ 
+/* Focus */
+.input-file input[type=file]:focus + span {
+	box-shadow: 0 0 }
+
+	#infoContainer {
+		width: 200px;
+	}
