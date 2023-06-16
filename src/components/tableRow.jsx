@@ -4,7 +4,6 @@ const TableRow = ({
   name,
   culvertLength,
   culvertAxisPointQuantity,
-  axisHeightDifference,
   culvertSlop,
   culvertRoadsideQuantity,
   culvertRoadAxisQuantity,
@@ -25,7 +24,6 @@ const TableRow = ({
         <td className='mainTableCeil'>{culvertAxisPointQuantity}</td>
         <td className='mainTableCeil'>{culvertRoadAxisQuantity}</td>
         <td className='mainTableCeil'>{culvertRoadsideQuantity}</td>
-        {/* <td >разница высот: {axisHeightDifference}</td> */}
         <td className='mainTableCeil'>{culvertSlop}</td>
       </tr>
     </>

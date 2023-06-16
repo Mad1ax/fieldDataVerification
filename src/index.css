@@ -37,6 +37,7 @@ textarea::placeholder {
 
 .inputContainer {
   display: grid;
+  /* grid-template-columns: 800px 250px; */
   grid-template-columns: 800px 250px;
   min-height: 200px;
 }
@@ -44,6 +45,11 @@ textarea::placeholder {
 #collapseOne {
 	padding: 0px;
 }
+
+.loaded_hiding {
+	transition: 0.3s opacity;
+	opacity: 0;
+  }
 
 /* #collapseTarget {
 	margin: 0px;

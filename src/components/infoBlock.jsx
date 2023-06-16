@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const InfoBlock = () => {
   const [collapsedBlock, setCollapsedBlock] = useState(true);
-  let bool;
+  // let bool;
 
   let classes;
   const getClasses = () => {
