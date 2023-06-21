@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { getDistance } from "geolib";
-import _ from "lodash";
+import React, { useState } from 'react';
+import { getDistance } from 'geolib';
+import _ from 'lodash';
 
-import TableRow from "./components/tableRow";
-import TableHead from "./components/tableHead";
-import KmRow from "./components/kmRow";
-import InfoBlock from "./components/infoBlock";
+import TableRow from './components/tableRow';
+import TableHead from './components/tableHead';
+import KmRow from './components/kmRow';
+import InfoBlock from './components/infoBlock';
 
 //загрузка тогоже файла
 //loader
@@ -13,7 +13,7 @@ import InfoBlock from "./components/infoBlock";
 //отправка данных
 
 const App = () => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
   const [culvertObjects, setCulvertObjects] = useState([]);
   const [kmMarkerArr, setKmMarkerArr] = useState([]);
   const [kmMarkerArrComponent, setKmMarkerArrComponent] = useState([]);
@@ -21,7 +21,7 @@ const App = () => {
   const [kmMarkerArea, setKmMarkerArea] = useState([]);
   const [numberVerifiedCulverts, setNumberVerifiedCulverts] = useState(0);
   const [isFileLoaded, setFileLoaded] = useState(false);
-  const [loadedFileName, setLoadedFileName] = useState("");
+  const [loadedFileName, setLoadedFileName] = useState('');
 
   let dataArr = [];
   let uniqCulvertsArr = [];
@@ -35,17 +35,17 @@ const App = () => {
   //обработка и проверка данных
   const firstDataChecker = () => {
     // проверка на наличие шапки
-    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === "tr" ||
-    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === "km"
+    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'tr' ||
+    inputValue.trim().split(`\n`)[0].split(`,`)[1].substr(0, 2) === 'km'
       ? (dataArr = inputValue.trim().split(`\n`))
       : (dataArr = inputValue.trim().split(`\n`).slice(1));
 
     //поиск уникальных труб и км
     dataArr.forEach((elem) => {
-      if (elem.split(`,`)[1].split(`_`)[0].includes("tr")) {
+      if (elem.split(`,`)[1].split(`_`)[0].includes('tr')) {
         uniqCulvertsArr.push(elem.split(`,`)[1].split(`_`)[0]);
       }
-      if (elem.split(`,`)[1].split(`_`)[0].includes("km")) {
+      if (elem.split(`,`)[1].split(`_`)[0].includes('km')) {
         uniqKmArr.push(elem.split(`,`)[1].split(`_`)[0]);
       }
     });
@@ -53,16 +53,16 @@ const App = () => {
     //фильтрация и сортировка массивов уникальных труб и км
     let setCulveret = new Set(uniqCulvertsArr);
     filteredUniqCulvertsArr = [...setCulveret].sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
     let setKm = new Set(uniqKmArr);
     filteredUniqKmArr = [...setKm].sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
     );
 
-    console.log("уникальные трубы", filteredUniqCulvertsArr);
-    console.log("уникальные км", filteredUniqKmArr);
+    console.log('уникальные трубы', filteredUniqCulvertsArr);
+    console.log('уникальные км', filteredUniqKmArr);
 
     //установка участка километровых столбов
     setKmMarkerArr(filteredUniqKmArr);
@@ -95,6 +95,7 @@ const App = () => {
     let currentCulvertHeight2;
     let currentCulvetRoadAxisQuantity = 0;
     let currentCulvetRoadsideQuantity = 0;
+    // let currentCulvertRoadHightMarker = 0;
     let verifiedCulverts = 0;
     let culvertIndex;
 
@@ -102,7 +103,7 @@ const App = () => {
     filteredUniqCulvertsArr.forEach((uniqCulvert) => {
       dataArr.forEach((elem) => {
         if (elem.split(`,`)[1].split(`_`)[0] === uniqCulvert) {
-          if (elem.split(`,`)[5].includes("ось трубы")) {
+          if (elem.split(`,`)[5].includes('ось трубы')) {
             currentCulvetAxisQuantity++;
             culvertCoordsObject = {
               culvertName: uniqCulvert,
@@ -114,12 +115,15 @@ const App = () => {
 
             culvertCoordsArray.push(culvertCoordsObject);
           }
-          if (elem.split(`,`)[5].includes("ось дороги")) {
+          if (elem.split(`,`)[5].includes('ось дороги')) {
             currentCulvetRoadAxisQuantity++;
           }
-          if (elem.split(`,`)[5].includes("бровка")) {
+          if (elem.split(`,`)[5].includes('бровка')) {
             currentCulvetRoadsideQuantity++;
           }
+          //   if (elem.split(`,`)[5].includes('ось дороги')) {
+          //     currentCulvertRoadHightMarker = elem.split(`,`)[4];
+          //   }
         }
       });
 
@@ -127,10 +131,12 @@ const App = () => {
         culvertName: uniqCulvert,
         culvertLength: 0,
         culvertAxisPointQuantity: currentCulvetAxisQuantity,
+        // culvertRoadAxisHight: Number(currentCulvertRoadHightMarker),
         culvertRoadsideQuantity: currentCulvetRoadsideQuantity,
         culvertRoadAxisQuantity: currentCulvetRoadAxisQuantity,
         axisHeightDifference: 0,
         culvertSlope: 0,
+        // culvertHeightFill: 0,
         isVerifiedCulvert: false,
       };
 
@@ -180,6 +186,14 @@ const App = () => {
             Math.abs(currentCulvertHeight2 - currentCulvertHeight1).toFixed(3)
           );
 
+          //расчет высоты средней насыпи над трубой
+          //   if (currentCulvetRoadAxisQuantity > 0) {
+          //     culvertTotalDataArr[culvertIndex].culvertHeightFill =
+          //       Number(currentCulvertRoadHightMarker) -
+          //       (Number(currentCulvertHeight2) + Number(currentCulvertHeight1)) /
+          //         2;
+          //   }
+
           //расчет уклона трубы по оси
           culvertTotalDataArr[culvertIndex].culvertSlope = Number(
             (
@@ -207,14 +221,14 @@ const App = () => {
 
     setNumberVerifiedCulverts(verifiedCulverts);
     verifiedCulverts = 0;
-    console.log("массив объектов труб", culvertTotalDataArr);
+    console.log('массив объектов труб', culvertTotalDataArr);
     setInfoBlock(true);
     setCulvertObjects(culvertTotalDataArr);
   };
 
   //очистка содержимого
   const inputClear = () => {
-    setInputValue("");
+    setInputValue('');
     setInfoBlock(false);
     setFileLoaded(false);
   };
@@ -226,76 +240,100 @@ const App = () => {
     let reader = new FileReader();
     reader.onload = function (event) {
       let currentTextareaValue = event.target.result;
-      setInputValue("");
+      setInputValue('');
       setInputValue(currentTextareaValue);
     };
 
-    console.log("загружаю файл", file.name);
+    console.log('загружаю файл', file.name);
     setLoadedFileName(file.name);
     reader.readAsText(file);
   };
 
-  let sendData = () => console.log("sendData");
+  //   let sendData = () => console.log('sending');
+
+  let sendData = () => {
+    navigator
+      .share({
+        title: `123`,
+        text: `${JSON.stringify(inputValue)}`,
+      })
+      .then(() => {
+        console.log('список труб отправлен');
+      })
+      .catch((err) => {
+        console.log('что-то пошло не так');
+      });
+  };
 
   return (
     <>
-      <h1 className="m-2 border-bottom text-center">
+      <h1 className='m-2 border-bottom text-center'>
         Верификация данных с приёмника
       </h1>
-      <form action="" id="form">
-        <div className="inputContainer p-2">
+      <form action='' id='form'>
+        <div className='inputContainer p-2'>
           <textarea
-            className="form-control"
-            id="inputText"
-            name="inputText"
-            placeholder=">>вставь данные сюда или выбери текстовый файл<<"
-            rows="10"
+            className='form-control'
+            id='inputText'
+            name='inputText'
+            placeholder='>>вставь данные сюда или выбери текстовый файл<<'
+            rows='10'
             value={inputValue}
             onChange={handleChange}
           ></textarea>
 
-          <div className=" buttonContainer p-2">
-            <button
-              className="btn btn-primary m-2 border-secondary"
-              id="func-buttons"
-              type="button"
-              onClick={firstDataChecker}
-            >
-              проверить данные
-            </button>
-
-            <div className="spanContainer">
-              <label className="input-file">
+          <div className=' buttonContainer p-2'>
+            <div className='spanContainer'>
+              <label className='input-file'>
                 <input
-                  type="file"
-                  className="form-control"
-                  id="inputGroupFile04"
-                  aria-describedby="inputGroupFileAddon04"
+                  type='file'
+                  className='form-control'
+                  id='inputGroupFile04'
+                  aria-describedby='inputGroupFileAddon04'
                   onChange={fileLoader}
-                  aria-label="Upload"
+                  aria-label='Upload'
                 />
-                <span id="spanButton" className="bg-primary">
+                <span id='spanButton' className='bg-primary'>
                   выбрать файл
                 </span>
               </label>
             </div>
             {isFileLoaded && (
-              <div className="font-weight-bold">загружен {loadedFileName}</div>
+              <div className='font-weight-bold'>загружен {loadedFileName}</div>
             )}
 
             <button
-              className="btn btn-warning m-2 border-secondary"
-              id="func-buttons"
-              type="button"
-              onClick={sendData}
+              className='btn btn-primary m-2 border-secondary'
+              id='func-buttons'
+              type='button'
+              onClick={firstDataChecker}
             >
-              отправить данные
+              проверить данные
             </button>
 
             <button
-              className="btn btn-info m-2 border-secondary"
-              type="button"
-              id="func-buttons"
+              className='btn btn-warning m-2 border-secondary'
+              id='func-buttons'
+              type='button'
+              onClick={sendData}
+            >
+              отправить данные
+              {/* <svg
+                xmlns='http://www.w3.org/2000/svg'
+                width='16'
+                height='16'
+                fill='currentColor'
+                className='bi bi-send float-md-end m-1'
+                viewBox='0 0 16 16'
+              >
+                <path d='M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z' />
+              </svg> */}
+            </button>
+
+            <button
+              className='btn btn-info m-2 border-secondary'
+              type='button'
+              id='func-buttons'
               onClick={inputClear}
             >
               очистить данные
@@ -307,9 +345,9 @@ const App = () => {
 
       {infoBlock && (
         <div>
-          <div className="border-2 border-danger p-2">
+          <div className='border-2 border-danger p-2'>
             <h5>
-              Километровые столбы: {kmMarkerArr.length} шт.{" "}
+              Километровые столбы: {kmMarkerArr.length} шт.{' '}
               {kmMarkerArea.length === 2 && (
                 <div>
                   На участке {kmMarkerArea[0].slice(2)}-
@@ -317,7 +355,7 @@ const App = () => {
                 </div>
               )}
             </h5>
-            <table className="table table-hover table-bordered km-table">
+            <table className='table table-hover table-bordered km-table'>
               <tbody>
                 {kmMarkerArrComponent.map((elem) => (
                   <KmRow key={elem} currentRow={elem} />
@@ -326,7 +364,7 @@ const App = () => {
             </table>
           </div>
 
-          <div className="border-2 border-danger p-2">
+          <div className='border-2 border-danger p-2'>
             <h5>
               Водопропускные трубы: {culvertObjects.length} шт.
               {numberVerifiedCulverts > 0 ? (
@@ -336,7 +374,7 @@ const App = () => {
               )}
             </h5>
 
-            <table className="table table-hover table-bordered">
+            <table className='table table-hover table-bordered'>
               <TableHead />
               <tbody>
                 {culvertObjects.map((culvert) => (

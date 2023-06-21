@@ -60,6 +60,7 @@ const InfoBlock = () => {
                 <li className='list-group-item'>1 точка оси дороги</li>
                 <li className='list-group-item'>длина 3-100 метров</li>
                 <li className='list-group-item'>уклон до 600‰</li>
+				{/* <li className='list-group-item'>высота насыпи 5см+</li> */}
               </ol>
             </div>
           </div>
