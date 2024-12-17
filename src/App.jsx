@@ -95,7 +95,8 @@ const App = () => {
     let currentCulvertHeight2;
     let currentCulvetRoadAxisQuantity = 0;
     let currentCulvetRoadsideQuantity = 0;
-    // let currentCulvertRoadHightMarker = 0;
+    // let currentCulvertRoadAxisHeight = 0;
+    let currentCulvertRoadHightMarker = 0;
     let verifiedCulverts = 0;
     let culvertIndex;
 
@@ -115,15 +116,15 @@ const App = () => {
 
             culvertCoordsArray.push(culvertCoordsObject);
           }
+
           if (elem.split(`,`)[5].includes('ось дороги')) {
             currentCulvetRoadAxisQuantity++;
+            currentCulvertRoadHightMarker = Number(elem.split(`,`)[4]);
+            // console.log(currentCulvertRoadAxisHeight);
           }
           if (elem.split(`,`)[5].includes('бровка')) {
             currentCulvetRoadsideQuantity++;
           }
-          //   if (elem.split(`,`)[5].includes('ось дороги')) {
-          //     currentCulvertRoadHightMarker = elem.split(`,`)[4];
-          //   }
         }
       });
 
@@ -131,12 +132,13 @@ const App = () => {
         culvertName: uniqCulvert,
         culvertLength: 0,
         culvertAxisPointQuantity: currentCulvetAxisQuantity,
-        // culvertRoadAxisHight: Number(currentCulvertRoadHightMarker),
         culvertRoadsideQuantity: currentCulvetRoadsideQuantity,
         culvertRoadAxisQuantity: currentCulvetRoadAxisQuantity,
         axisHeightDifference: 0,
         culvertSlope: 0,
         // culvertHeightFill: 0,
+        culvertRoadAxisHeight: currentCulvertRoadHightMarker,
+        culvertGroundHeight: 0,
         isVerifiedCulvert: false,
       };
 
@@ -175,24 +177,37 @@ const App = () => {
             0.01
           );
 
+          let currentCulvertGroundHeight = 0;
+
           culvertIndex = _.indexOf(filteredUniqCulvertsArr, uniqCulvert);
 
           culvertTotalDataArr[culvertIndex].culvertLength = Number(
             currentCulvertLength.toFixed(3)
           );
 
+          //высота насыпи
+          // culvertTotalDataArr[culvertIndex].culvertGroundHeight = (
+          //   currentCulvertRoadHightMarker -
+          //   (Number(currentCulvertHeight1) + Number(currentCulvertHeight2)) / 2
+          // ).toFixed(2);
+
+          // console.log(currentCulvertRoadHightMarker);
+          // console.log(culvertRoadAxisHeight);
+          // console.log(culvertGroundHeight);
+
+          // console.log(
+          //   'h',
+          //   (
+          //     culvertTotalDataArr[culvertIndex].culvertGroundHeight -
+          //     (Number(currentCulvertHeight1) + Number(currentCulvertHeight2)) /
+          //       2
+          //   ).toFixed(2)
+          // );
+
           //расчет разницы высотных отметок
           culvertTotalDataArr[culvertIndex].axisHeightDifference = Number(
             Math.abs(currentCulvertHeight2 - currentCulvertHeight1).toFixed(3)
           );
-
-          //расчет высоты средней насыпи над трубой
-          //   if (currentCulvetRoadAxisQuantity > 0) {
-          //     culvertTotalDataArr[culvertIndex].culvertHeightFill =
-          //       Number(currentCulvertRoadHightMarker) -
-          //       (Number(currentCulvertHeight2) + Number(currentCulvertHeight1)) /
-          //         2;
-          //   }
 
           //расчет уклона трубы по оси
           culvertTotalDataArr[culvertIndex].culvertSlope = Number(
@@ -202,6 +217,12 @@ const App = () => {
               1000
             ).toFixed(2)
           );
+
+          //vis nas
+          culvertTotalDataArr[culvertIndex].culvertGroundHeight = (
+            culvertTotalDataArr[culvertIndex].culvertRoadAxisHeight -
+            (Number(currentCulvertHeight1) + Number(currentCulvertHeight2)) / 2
+          ).toFixed(2);
 
           //верификация текущей трубы
           if (
@@ -387,6 +408,8 @@ const App = () => {
                     culvertSlop={culvert.culvertSlope}
                     culvertRoadsideQuantity={culvert.culvertRoadsideQuantity}
                     culvertRoadAxisQuantity={culvert.culvertRoadAxisQuantity}
+                    // culvertGroundHeight={culvert.culvertGroundHeight}
+                    culvertGroundHeight={culvert.culvertGroundHeight}
                     verifiedCulvert={culvert.isVerifiedCulvert}
                   />
                 ))}
