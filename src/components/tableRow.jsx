@@ -8,14 +8,16 @@ const TableRow = ({
   culvertRoadsideQuantity,
   culvertRoadAxisQuantity,
   verifiedCulvert,
+  culvertGroundHeight,
 }) => {
+  // let classes += verifiedCulvert === true? 'bg-danger' : 'bg-info'
+  // console.log(verifiedCulvert)
+  let classes;
+  // classes +=verifiedCulvert? 'primary':'danger'
+  if (!verifiedCulvert) {
+    classes = 'bg-warning';
+  }
 
-	// let classes += verifiedCulvert === true? 'bg-danger' : 'bg-info'
-	// console.log(verifiedCulvert)
-	let classes
-	// classes +=verifiedCulvert? 'primary':'danger'
-	if (!verifiedCulvert) {classes='bg-warning'}
-	
   return (
     <>
       <tr className={classes}>
@@ -25,6 +27,7 @@ const TableRow = ({
         <td className='mainTableCeil'>{culvertRoadAxisQuantity}</td>
         <td className='mainTableCeil'>{culvertRoadsideQuantity}</td>
         <td className='mainTableCeil'>{culvertSlop}</td>
+        <td className='mainTableCeil'>{culvertGroundHeight}</td>
       </tr>
     </>
   );
